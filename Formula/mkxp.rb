@@ -2,8 +2,8 @@ class Mkxp < Formula
   desc "Free Software implementation of the Ruby Game Scripting System (RGSS)"
   homepage "https://github.com/Ancurio/mkxp"
   url "https://github.com/Ancurio/mkxp.git",
-    revision: "a962c158db5aaee2f322590ae69153dea41d9403"
-  version "0+20211016"
+    revision: "380b676777b101a7d6648a8e6b9a226a8984bbc0"
+  version "0+20211105"
   head "https://github.com/Ancurio/mkxp.git", branch: "master"
 
   depends_on "autoconf" => :build
@@ -55,7 +55,7 @@ class Mkxp < Formula
     end
 
     resource("ruby").stage do
-      system "./configure", "--prefix=#{libexec}", "--enable-shared"
+      system "./configure", "--prefix=#{libexec}", "--enable-shared", "--with-out-ext=openssl"
       system "make"
       system "make", "install"
     end

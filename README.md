@@ -1,11 +1,14 @@
 # homebrew-mkxp
 
+Homebrew tap for [mkxp](https://github.com/Ancurio/mkxp).
+
 ## How do I install these formulae?
 
-`brew install sjx233/mkxp/<formula>`
+`brew install 0f-0b/mkxp/<formula>`
 
-Or `brew tap sjx233/mkxp` and then `brew install <formula>`.
+Or `brew tap 0f-0b/mkxp` and then `brew install <formula>`.
 
 ## Documentation
 
-`brew help`, `man brew` or check [Homebrew's documentation](https://docs.brew.sh).
+`brew help`, `man brew` or check
+[Homebrew's documentation](https://docs.brew.sh).
