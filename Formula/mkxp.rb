@@ -32,6 +32,22 @@ class Mkxp < Formula
   resource "ruby" do
     url "https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.10.tar.bz2"
     sha256 "a54204d2728283c9eff0cf81d654f245fa5b3447d0824f1a6bc3b2c5c827381e"
+    patch <<~PATCH
+      diff --git a/configure b/configure
+      index b6914a2..7a9635e 100755
+      --- a/configure
+      +++ b/configure
+      @@ -5599,6 +5599,9 @@ $as_echo_n "checking for real target cpu... " >&6; }
+       #ifdef __ppc64__
+       "processor-name=powerpc64"
+       #endif
+      +#ifdef __arm64__
+      +"processor-name=arm64"
+      +#endif
+       EOF
+       	    sed -n 's/^"processor-name=\\(.*\\)"/\\1/p'`
+       	    target="$target_cpu${target}"
+    PATCH
   end
 
   resource "sdl_sound" do
@@ -55,7 +71,7 @@ class Mkxp < Formula
     end
 
     resource("ruby").stage do
-      system "./configure", "--prefix=#{libexec}", "--enable-shared", "--with-out-ext=openssl"
+      system "./configure", "--prefix=#{libexec}", "--enable-shared", "--with-out-ext=fiddle,openssl"
       system "make"
       system "make", "install"
     end
@@ -66,9 +82,10 @@ class Mkxp < Formula
       system "make", "install"
     end
 
+    libs = OS.mac? ? "-liconv" : ""
     boost = Formula["boost"].opt_prefix
     qt5 = Formula["qt@5"].opt_prefix
-    system "#{qt5}/bin/qmake", "BOOST_I=#{boost}/include", "BOOST_L=#{boost}/lib",
+    system "#{qt5}/bin/qmake", "LIBS=#{libs}", "BOOST_I=#{boost}/include", "BOOST_L=#{boost}/lib",
       "CONFIG+=INI_ENCODING", "DEFINES+=WORKDIR_CURRENT", "MRIVERSION=2.2"
     system "make"
     prefix.install "mkxp.app"
