@@ -109,7 +109,7 @@ class Mkxp < Formula
   end
 
   test do
-    system "true"
+    return
   end
 end
 __END__

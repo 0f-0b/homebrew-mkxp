@@ -20,6 +20,8 @@ class RgssScriptEditor < Formula
   end
 
   test do
-    system "true"
+    (testpath/"000").write("rgss_main {}\n")
+    (testpath/"index").write("Main\n")
+    system bin/"rgss_script_editor_cli", ".", "Scripts.rvdata2"
   end
 end
