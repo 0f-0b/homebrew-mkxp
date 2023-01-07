@@ -56,6 +56,8 @@ class Mkxp < Formula
       revision: "04798ba55dccd18b094c0f6a2630c2fe7b15aa86"
   end
 
+  patch :DATA
+
   def install
     ENV.cxx11
 
@@ -82,17 +84,67 @@ class Mkxp < Formula
       system "make", "install"
     end
 
-    libs = OS.mac? ? "-liconv" : ""
     boost = Formula["boost"].opt_prefix
     qt5 = Formula["qt@5"].opt_prefix
-    system "#{qt5}/bin/qmake", "LIBS=#{libs}", "BOOST_I=#{boost}/include", "BOOST_L=#{boost}/lib",
-      "CONFIG+=INI_ENCODING", "DEFINES+=WORKDIR_CURRENT", "MRIVERSION=2.2"
+
+    qmake_args = [
+      "LIBS=#{OS.mac? ? "-liconv" : ""}",
+      "BOOST_I=#{boost}/include",
+      "BOOST_L=#{boost}/lib",
+      "CONFIG+=INI_ENCODING",
+      "DEFINES+=WORKDIR_CURRENT",
+      "MRIVERSION=2.2",
+    ]
+    qmake_args << "CONFIG+=SHARED_FLUID" if build.with? "fluid-synth"
+
+    system "#{qt5}/bin/qmake", *qmake_args
     system "make"
-    prefix.install "mkxp.app"
-    bin.write_exec_script "#{prefix}/mkxp.app/Contents/MacOS/mkxp"
+
+    if OS.mac?
+      prefix.install "mkxp.app"
+      bin.write_exec_script "#{prefix}/mkxp.app/Contents/MacOS/mkxp"
+    else
+      bin.install "mkxp"
+    end
   end
 
   test do
     system "true"
   end
 end
+__END__
+diff --git a/src/fluid-fun.h b/src/fluid-fun.h
+index 005bdf7..2ac50c2 100644
+--- a/src/fluid-fun.h
++++ b/src/fluid-fun.h
+@@ -10,6 +10,7 @@
+ typedef struct _fluid_hashtable_t fluid_settings_t;
+ typedef struct _fluid_synth_t fluid_synth_t;
+
++typedef int (*FLUIDSETTINGSSETINTPROC)(fluid_settings_t* settings, const char *name, int val);
+ typedef int (*FLUIDSETTINGSSETNUMPROC)(fluid_settings_t* settings, const char *name, double val);
+ typedef int (*FLUIDSETTINGSSETSTRPROC)(fluid_settings_t* settings, const char *name, const char *str);
+ typedef int (*FLUIDSYNTHSFLOADPROC)(fluid_synth_t* synth, const char* filename, int reset_presets);
+@@ -33,6 +34,7 @@ typedef void (*DELETEFLUIDSYNTHPROC)(fluid_synth_t* synth);
+ #endif
+
+ #define FLUID_FUNCS \
++	FLUID_FUN(settings_setint, FLUIDSETTINGSSETINTPROC) \
+ 	FLUID_FUN(settings_setnum, FLUIDSETTINGSSETNUMPROC) \
+ 	FLUID_FUN(settings_setstr, FLUIDSETTINGSSETSTRPROC) \
+ 	FLUID_FUN(synth_sfload, FLUIDSYNTHSFLOADPROC) \
+diff --git a/src/sharedmidistate.h b/src/sharedmidistate.h
+index f1fb35a..ebb76c0 100644
+--- a/src/sharedmidistate.h
++++ b/src/sharedmidistate.h
+@@ -82,8 +82,8 @@ struct SharedMidiState
+ 		flSettings = fluid.new_settings();
+ 		fluid.settings_setnum(flSettings, "synth.gain", 1.0f);
+ 		fluid.settings_setnum(flSettings, "synth.sample-rate", SYNTH_SAMPLERATE);
+-		fluid.settings_setstr(flSettings, "synth.chorus.active", conf.midi.chorus ? "yes" : "no");
+-		fluid.settings_setstr(flSettings, "synth.reverb.active", conf.midi.reverb ? "yes" : "no");
++		fluid.settings_setint(flSettings, "synth.chorus.active", conf.midi.chorus);
++		fluid.settings_setint(flSettings, "synth.reverb.active", conf.midi.reverb);
+
+ 		for (size_t i = 0; i < SYNTH_INIT_COUNT; ++i)
+ 			addSynth(false);
