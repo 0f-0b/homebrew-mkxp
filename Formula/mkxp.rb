@@ -73,6 +73,8 @@ class Mkxp < Formula
     end
 
     resource("ruby").stage do
+      ENV.prepend "CFLAGS", "-std=gnu89"
+
       system "./configure", "--prefix=#{libexec}", "--enable-shared", "--with-out-ext=fiddle,openssl"
       system "make"
       system "make", "install"
