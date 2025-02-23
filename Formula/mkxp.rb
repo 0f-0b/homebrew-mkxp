@@ -207,6 +207,18 @@ index d6ca485..3557728 100644
 
  private:
  	FontPrivate *p;
+diff --git a/src/main.cpp b/src/main.cpp
+index d70a26f..a9ae8b0 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -193,6 +193,7 @@ static void setupWindowIcon(const Config &conf, SDL_Window *win)
+
+ int main(int argc, char *argv[])
+ {
++	SDL_SetHint(SDL_HINT_MAC_OPENGL_ASYNC_DISPATCH, "1");
+ 	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
+ 	SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
+
 diff --git a/src/sharedmidistate.h b/src/sharedmidistate.h
 index f1fb35a..ebb76c0 100644
 --- a/src/sharedmidistate.h
