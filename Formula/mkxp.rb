@@ -20,6 +20,7 @@ class Mkxp < Formula
   depends_on "pixman"
   depends_on "sdl2"
   depends_on "sdl2_image"
+  depends_on "sdl2_sound"
   depends_on "sdl2_ttf"
   depends_on "fluid-synth" => :optional
 
@@ -50,12 +51,6 @@ class Mkxp < Formula
     PATCH
   end
 
-  resource "sdl_sound" do
-    url "https://github.com/Ancurio/SDL_sound.git",
-      branch:   "master",
-      revision: "04798ba55dccd18b094c0f6a2630c2fe7b15aa86"
-  end
-
   patch :DATA
 
   def install
@@ -77,12 +72,6 @@ class Mkxp < Formula
 
       system "./configure", "--prefix=#{libexec}", "--enable-shared", "--with-out-ext=fiddle,openssl"
       system "make"
-      system "make", "install"
-    end
-
-    resource("sdl_sound").stage do
-      system "./bootstrap"
-      system "./configure", "--prefix=#{libexec}"
       system "make", "install"
     end
 
@@ -115,8 +104,21 @@ class Mkxp < Formula
   end
 end
 __END__
+diff --git a/mkxp.pro b/mkxp.pro
+index ae229d7..e40f5c8 100644
+--- a/mkxp.pro
++++ b/mkxp.pro
+@@ -46,7 +46,7 @@ contains(BINDING, NULL) {
+ unix {
+ 	CONFIG += link_pkgconfig
+ 	PKGCONFIG += sigc++-2.0 pixman-1 zlib physfs vorbisfile \
+-	             sdl2 SDL2_image SDL2_ttf SDL_sound openal
++	             sdl2 SDL2_image SDL2_ttf SDL2_sound openal
+
+ 	SHARED_FLUID {
+ 		PKGCONFIG += fluidsynth
 diff --git a/src/fluid-fun.h b/src/fluid-fun.h
-index 005bdf7..2ac50c2 100644
+index 005bdf7..6ea3fdb 100644
 --- a/src/fluid-fun.h
 +++ b/src/fluid-fun.h
 @@ -10,6 +10,7 @@
@@ -135,6 +137,76 @@ index 005bdf7..2ac50c2 100644
  	FLUID_FUN(settings_setnum, FLUIDSETTINGSSETNUMPROC) \
  	FLUID_FUN(settings_setstr, FLUIDSETTINGSSETSTRPROC) \
  	FLUID_FUN(synth_sfload, FLUIDSYNTHSFLOADPROC) \
+diff --git a/src/font.cpp b/src/font.cpp
+index 5c1d304..0ef685a 100644
+--- a/src/font.cpp
++++ b/src/font.cpp
+@@ -129,7 +129,7 @@ void SharedFontState::initFontSetCB(SDL_RWops &ops,
+ 		set.other = filename;
+ }
+
+-_TTF_Font *SharedFontState::getFont(std::string family,
++TTF_Font *SharedFontState::getFont(std::string family,
+                                     int size)
+ {
+ 	/* Check for substitutions */
+@@ -195,7 +195,7 @@ bool SharedFontState::fontPresent(std::string family) const
+ 	return !(set.regular.empty() && set.other.empty());
+ }
+
+-_TTF_Font *SharedFontState::openBundled(int size)
++TTF_Font *SharedFontState::openBundled(int size)
+ {
+ 	SDL_RWops *ops = openBundledFont();
+
+@@ -441,7 +441,7 @@ void Font::initDefaults(const SharedFontState &sfs)
+ 	FontPrivate::defaultShadow  = (rgssVer == 2 ? true : false);
+ }
+
+-_TTF_Font *Font::getSdlFont()
++TTF_Font *Font::getSdlFont()
+ {
+ 	if (!p->sdlFont)
+ 		p->sdlFont = shState->fontState().getFont(p->name.c_str(),
+diff --git a/src/font.h b/src/font.h
+index d6ca485..3557728 100644
+--- a/src/font.h
++++ b/src/font.h
+@@ -28,8 +28,9 @@
+ #include <vector>
+ #include <string>
+
++#include <SDL_ttf.h>
++
+ struct SDL_RWops;
+-struct _TTF_Font;
+ struct Config;
+
+ struct SharedFontStatePrivate;
+@@ -47,12 +48,12 @@ public:
+ 	void initFontSetCB(SDL_RWops &ops,
+ 	                   const std::string &filename);
+
+-	_TTF_Font *getFont(std::string family,
++	TTF_Font *getFont(std::string family,
+ 	                   int size);
+
+ 	bool fontPresent(std::string family) const;
+
+-	static _TTF_Font *openBundled(int size);
++	static TTF_Font *openBundled(int size);
+
+ private:
+ 	SharedFontStatePrivate *p;
+@@ -112,7 +113,7 @@ public:
+ 	static void initDefaults(const SharedFontState &sfs);
+
+ 	/* internal */
+-	_TTF_Font *getSdlFont();
++	TTF_Font *getSdlFont();
+
+ private:
+ 	FontPrivate *p;
 diff --git a/src/sharedmidistate.h b/src/sharedmidistate.h
 index f1fb35a..ebb76c0 100644
 --- a/src/sharedmidistate.h
